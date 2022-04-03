@@ -44,8 +44,8 @@ posts_counter = 2
 comments_counter = 2
 
 @app.route("/")
-def greet():
-    return "Greetings! 😃"
+def hello_world():
+    return "Hello world!"
 
 @app.route("/api/posts/")
 def get_posts():
