@@ -31,8 +31,8 @@ class Course(db.Model):
     code = db.Column(db.String, nullable = False)
     name = db.Column(db.String, nullable = False)
     assignments = db.relationship("Assignment", cascade="delete")
-    instructors = db.relationship("Instructor", cascade="delete")
-    students = db.relationship("Student", cascade="delete")
+    instructors = db.relationship("User", cascade="delete")
+    students = db.relationship("User", cascade="delete")
 
 
     def serialize(self):
