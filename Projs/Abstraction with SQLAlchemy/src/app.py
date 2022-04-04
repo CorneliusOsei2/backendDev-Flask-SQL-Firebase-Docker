@@ -26,7 +26,7 @@ def get_courses():
     '''
     Get all courses
     '''
-    courses = [course.serialize() for course in Course.query.all()]
+    courses = [course.serialize_for_course() for course in Course.query.all()]
     return response(res=courses, success=True, code=200)
     
 
@@ -50,7 +50,7 @@ def add_course():
     db.session.add(course)
     db.session.commit()
 
-    return response(res=course.serialize(), success=True, code=201)
+    return response(res=course.serialize_for_course(), success=True, code=201)
 
 
 @app.route("/api/courses/<int:course_id>/", methods=["GET"])
@@ -61,7 +61,7 @@ def get_course(course_id):
     course = Course.query.filter_by(id=course_id).first()
 
     if not course: return response(res="No such course found", success=False, code=404)
-    return response(res=course.serialize(), success=True, code=200)
+    return response(res=course.serialize_for_course(), success=True, code=200)
 
 
 @app.route("/api/courses/<int:course_id>/", methods=["DELETE"])
@@ -75,12 +75,71 @@ def delete_course(course_id):
 
     db.session.delete(del_course)
     db.session.commit()
-    return response(res=del_course.serialize(), success=True, code=200)
+    return response(res=del_course.serialize_for_course(), success=True, code=200)
+
+@app.route("/api/users/", methods=["GET"])
+def get_users():
+    '''
+    Get all users
+    '''
+    users = [user.serialize_for_user() for user in User.query.all()]
+    return response(res=users, success=True, code=200)
 
 @app.route("/api/users/", methods=["POST"])
 def create_user():
+    '''
+    Create a user
+    '''
     body = json.loads(request.data)
+    name, netid = body.get("name"), body.get("netid")
+
+    if not name or not netid:
+        return response(res="name and netid fields required", success=False, code=400)
     
+    new_user = User(
+        name = name,
+        netid = netid
+    )
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return response(res=new_user.serialize_for_user(), success=True, code=201)
+
+@app.route("/api/users/<int:user_id>/", methods=["GET"])
+def get_user(user_id):
+    '''
+    Get user with id <user_id>
+    '''
+    user = User.query.filter_by(id=user_id).first()
+
+    if not user: return response(res="No such user found!", success=False, code=404)
+    return response(res=user.serialize_for_user(), success=True, code=200)
+
+
+@app.route("/api/courses/<int:course_id>/add/", methods=["POST"])
+def add_course_user(course_id):
+    '''
+    Add user to course with id <course_id>
+    '''
+    body = json.loads(request.data)
+    user_id, role = body.get("user_id"), body.get("type")
+    if (not user_id or not role) or not (role == "student" or role == "instructor"):
+        return response(res="Valid user_id and type fields required!", success=False, code=400)
+
+    user = User.query.filter_by(id=user_id).first()
+    if not user: return response(res="No such user found!", success=False, code=404)
+    course = Course.query.filter_by(id=course_id).first()
+    if not course: return response(res="No such course found!", success=False, code=404)
+
+    user.role = role
+    course.users.append(user)
+    db.session.commit()
+
+    return response(res=course.serialize_for_course(), success=True, code=200)
+
+
+
 
 
 
@@ -98,4 +157,4 @@ def drop_table():
 
  
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=4000, debug=True)
+    app.run(host="0.0.0.0", port=4500, debug=True)
