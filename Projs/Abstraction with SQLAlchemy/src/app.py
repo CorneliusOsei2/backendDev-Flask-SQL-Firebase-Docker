@@ -1,5 +1,5 @@
 from isort import code
-from db import Assignment, db
+from db import User, db
 from flask import Flask, request
 from db import Course
 import json
@@ -23,13 +23,18 @@ def response(res={}, success = True, code = 200):
 # your routes here
 @app.route("/api/courses/", methods=["GET"])
 def get_courses():
-
+    '''
+    Get all courses
+    '''
     courses = [course.serialize() for course in Course.query.all()]
     return response(res=courses, success=True, code=200)
     
 
 @app.route("/api/courses/", methods=["POST"])
 def add_course():
+    '''
+    Add new course
+    '''
     body = json.loads(request.data)
     code = body.get("code", None)
     name = body.get("name", None)
@@ -47,13 +52,35 @@ def add_course():
 
     return response(res=course.serialize(), success=True, code=201)
 
+
 @app.route("/api/courses/<int:course_id>/", methods=["GET"])
 def get_course(course_id):
+    '''
+    Get course with id <course_id>
+    '''
     course = Course.query.filter_by(id=course_id).first()
 
-    if course: return response(res=course.serialize(), success=True, code=200)
-    return response(res="No such course found", success=False, code=404)
+    if not course: return response(res="No such course found", success=False, code=404)
+    return response(res=course.serialize(), success=True, code=200)
 
+
+@app.route("/api/courses/<int:course_id>/", methods=["DELETE"])
+def delete_course(course_id):
+    '''
+    Delete course with id <course_id>
+    '''
+    del_course = Course.query.filter_by(id=course_id).first()
+
+    if not del_course: response(res="No such course found", success=False, code=404)
+
+    db.session.delete(del_course)
+    db.session.commit()
+    return response(res=del_course.serialize(), success=True, code=200)
+
+@app.route("/api/users/", methods=["POST"])
+def create_user():
+    body = json.loads(request.data)
+    
 
 
 
@@ -65,18 +92,10 @@ def drop_table():
 
 
 
+
+
+
+
+ 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=4000, debug=True)
-
-
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
