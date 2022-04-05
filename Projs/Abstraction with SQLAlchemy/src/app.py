@@ -167,8 +167,6 @@ def add_course_assignment(course_id):
 
 
 
-
-
 # Added for testing purposes
 @app.route("/api/drop/", methods=["POST"])
 def drop_table():
