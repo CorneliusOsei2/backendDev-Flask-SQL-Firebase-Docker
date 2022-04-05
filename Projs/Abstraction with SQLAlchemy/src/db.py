@@ -14,12 +14,21 @@ users_courses_table = db.Table("users_courses", db.Model.metadata,
 class Assignment(db.Model):
     __tablename__ = "assignments"
     id = db.Column(db.Integer, primary_key = True)
-    course = db.Column(db.Integer, db.ForeignKey("courses.id"), nullable=False)
-
+    title = db.Column(db.String, nullable=False)
+    due_date = db.Column(db.Integer, nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey("courses.id"), nullable=False)
 
     def serialize(self):
+        course = Course.query.filter_by(id=self.course)
         return {
-            "id": self.id
+            "id": self.id,
+            "title": self.title,
+            "due_date": self.due_date,
+            "course": {
+                "id": self.course_id,
+                "code": course.code,
+                "name": course.name
+            }
         }
 
 

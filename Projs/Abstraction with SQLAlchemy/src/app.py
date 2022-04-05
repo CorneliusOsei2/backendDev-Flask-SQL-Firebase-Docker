@@ -1,5 +1,5 @@
 from isort import code
-from db import User, db
+from db import Assignment, User, db
 from flask import Flask, request
 from db import Course
 import json
@@ -138,6 +138,27 @@ def add_course_user(course_id):
 
     return response(res=course.serialize_for_course(), success=True, code=200)
 
+
+@app.route("/api/courses/<int:course_id>/assignment/", methods=["POST"])
+def add_course_assignment(course_id):
+
+    body = json.loads(request.data)
+    title, due_date = body.get("title"), body.get("due_date")
+    if not (title or due_date):
+        response(res="Valid title and due_date required!", success=False, code=400)
+    
+    course = Course.query.filter_by(id=course_id)
+    if not course: return response(res="No such course found!", success=False, code=404)
+
+    assignment = Assignment(
+        title = title,
+        due_date = due_date
+    )
+
+    course.assignments.append(assignment)
+    db.session.commit()
+
+    return assignment.serialize()
 
 
 
