@@ -27,7 +27,7 @@ def get_courses():
     Get all courses
     '''
     courses = [course.serialize_for_course() for course in Course.query.all()]
-    return response(res=courses, success=True, code=200)
+    return response(res={"courses": courses}, success=True, code=200)
     
 
 @app.route("/api/courses/", methods=["POST"])
@@ -83,7 +83,7 @@ def get_users():
     Get all users
     '''
     users = [user.serialize_for_user() for user in User.query.all()]
-    return response(res=users, success=True, code=200)
+    return response(res={"users": users}, success=True, code=200)
 
 @app.route("/api/users/", methods=["POST"])
 def create_user():
@@ -141,24 +141,29 @@ def add_course_user(course_id):
 
 @app.route("/api/courses/<int:course_id>/assignment/", methods=["POST"])
 def add_course_assignment(course_id):
-
+    '''
+    Add assignment to course with id <course_id>
+    '''
     body = json.loads(request.data)
     title, due_date = body.get("title"), body.get("due_date")
-    if not (title or due_date):
-        response(res="Valid title and due_date required!", success=False, code=400)
+    if not (title and due_date):
+        return response(res="Valid title and due_date required!", success=False, code=400)
     
-    course = Course.query.filter_by(id=course_id)
+    course = Course.query.filter_by(id=course_id).first()
     if not course: return response(res="No such course found!", success=False, code=404)
 
     assignment = Assignment(
         title = title,
-        due_date = due_date
+        due_date = due_date,
+        course_id = course.id,
+        course = course
     )
 
+    db.session.add(assignment)
     course.assignments.append(assignment)
     db.session.commit()
 
-    return assignment.serialize()
+    return response(res=assignment.serialize_for_assignment(), success=True, code=201)
 
 
 

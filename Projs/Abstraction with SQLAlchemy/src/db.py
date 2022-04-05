@@ -12,27 +12,41 @@ users_courses_table = db.Table("users_courses", db.Model.metadata,
 
 # your classes here
 class Assignment(db.Model):
+    '''
+    An instance is a row representing an assignment in an <assignments> table
+    '''
     __tablename__ = "assignments"
     id = db.Column(db.Integer, primary_key = True)
     title = db.Column(db.String, nullable=False)
     due_date = db.Column(db.Integer, nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey("courses.id"), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey("courses.id"))
+    course = db.relationship("Course", cascade="delete")
 
-    def serialize(self):
-        course = Course.query.filter_by(id=self.course)
+    def serialize_for_assignment(self):
         return {
             "id": self.id,
             "title": self.title,
             "due_date": self.due_date,
             "course": {
-                "id": self.course_id,
-                "code": course.code,
-                "name": course.name
+                "id": self.course.id,
+                "code": self.course.code,
+                "name": self.course.name
             }
+        }
+    
+    def serialize_for_course(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "due_date": self.due_date
         }
 
 
 class User(db.Model):
+    '''
+    An instance is a row representing a user in a <users> table
+    '''
+
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String, nullable=False)
@@ -57,12 +71,15 @@ class User(db.Model):
 
 
 class Course(db.Model):
+    '''
+    An instance is a row representing a course in a <courses> table
+    '''
     __tablename__ = "courses"
     id = db.Column(db.Integer, primary_key = True)
     code = db.Column(db.String, nullable = False)
     name = db.Column(db.String, nullable = False)
-    assignments = db.relationship("Assignment", cascade="delete") #one-to-many relationship
     users = db.relationship("User", secondary=users_courses_table, back_populates='courses')    #many-to-many-relationship
+    assignments = db.relationship("Assignment", cascade="delete") #one-to-many relationship
 
 
     def serialize_for_course(self):
@@ -70,7 +87,7 @@ class Course(db.Model):
             "id": self.id,
             "code": self.code,
             "name": self.name,
-            "assignments": [assignment.serialize() for assignment in self.assignments],
+            "assignments": [assignment.serialize_for_course() for assignment in self.assignments],
             "instructors": [user.serialize_for_course() for user in self.users if user.role == "instructor"],
             "students": [user.serialize_for_course() for user in self.users if user.role == "student"]
         }
