@@ -1,4 +1,3 @@
-from isort import code
 from db import Assignment, User, db
 from flask import Flask, request
 from db import Course
